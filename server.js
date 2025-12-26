@@ -15,11 +15,15 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 app.post('/api/create-campaign', async (req, res) => {
   try {
     const { topic, audience, tone } = req.body;
-    console.log(`⚡ Generating campaign for: ${topic} using Gemini 2.0`);
+    console.log(`⚡ Generating campaign for: ${topic} using Gemini 2.0 Flash`);
 
-    // --- THE FIX IS HERE ---
-    // We are switching to the Gemini 2.0 Flash Experimental model
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    // --- THE CONFIGURATION ---
+    // We use the exact model name you confirmed works.
+    // We use 'v1beta' to ensure we have access to the latest 2.0 features.
+    const model = genAI.getGenerativeModel(
+      { model: "gemini-2.0-flash" },
+      { apiVersion: 'v1beta' }
+    );
 
     const prompt = `
       Act as a Senior Social Media Strategist.
@@ -32,25 +36,24 @@ app.post('/api/create-campaign', async (req, res) => {
       2. "twitter": A thread starter (punchy, under 280 chars, hashtags).
       3. "instagram": A visual concept description + caption.
       
-      Output ONLY raw JSON.
+      Output ONLY raw JSON. Do not use markdown blocks.
     `;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    // Clean up any markdown formatting the AI might add
+    // Clean up any potential markdown formatting
     const text = response.text().replace(/```json/g, '').replace(/```/g, '');
     
     res.json(JSON.parse(text));
 
   } catch (error) {
     console.error("AI Error:", error);
-    // This helps us see the exact model error in the logs if it fails again
     res.status(500).json({ error: "AI Strategy Failed", details: error.message });
   }
 });
 
 app.get('/', (req, res) => {
-  res.send('Sideio Social Engine (Gemini 2.0) is Online 🚀');
+  res.send('Sideio Social Engine (Gemini 2.0 Flash) is Online 🚀');
 });
 
 const PORT = process.env.PORT || 8080;
